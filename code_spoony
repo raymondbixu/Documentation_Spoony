@@ -1,0 +1,278 @@
+
+#include <Servo.h>
+#include <SoftwareSerial.h>
+#include <ArduinoBlue.h>
+int button;
+int sliderId;
+int clockVal = 100;
+int motor1pin1 = 22;
+int motor1pin2 = 23;
+int motor2pin1 = 24;
+int motor2pin2 = 25;
+
+int motor3pin1 = 26;
+int motor3pin2 = 27;
+int motor4pin1 = 28;
+int motor4pin2 = 29;
+int crab = 1;
+
+Servo myservo;
+Servo myservo_b; 
+// create servo object to control a servo
+// twelve servo objects can be created on most boards
+
+int pos = 0;    // variable to store the servo position
+/**
+ * Pins
+ */
+// continuous microservos
+
+// HM 10 bluetooth module connections
+// Bluetooth TX -> Arduino D8
+// Bluetooth RX -> Arduino D7
+const int BLUETOOTH_TX = 12;
+const int BLUETOOTH_RX = 13;
+
+
+SoftwareSerial bluetooth(BLUETOOTH_TX, BLUETOOTH_RX);
+ArduinoBlue phone(bluetooth); // pass reference of bluetooth object to ArduinoBlue constructor.
+
+// This function handles the driving.
+// Input is throttle and steering values from the phone.
+void handleDriving(int throttle, int steering, int crab) {
+  // If the throttle is close enough to zero, the robot stays still.
+  sliderId = phone.getSliderId();
+
+  if (sliderId == 1){
+    clockVal = phone.getSliderVal();
+  }
+  if (clockVal > 150){
+  Serial.println("clock_wise");
+  digitalWrite(motor1pin1, HIGH);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, HIGH);
+  digitalWrite(motor2pin2, LOW);
+  digitalWrite(motor3pin1,  HIGH);
+  digitalWrite(motor3pin2, LOW);
+  digitalWrite(motor4pin1, LOW);
+  digitalWrite(motor4pin2, HIGH);
+
+  }
+
+  else if (clockVal < 50){
+    Serial.println("counter_clock");
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, HIGH);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, HIGH);
+  digitalWrite(motor3pin1,  LOW);
+  digitalWrite(motor3pin2, HIGH);
+  digitalWrite(motor4pin1, HIGH);
+  digitalWrite(motor4pin2, LOW);
+  }
+  else if (abs(throttle) < 10) {
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, LOW);
+  digitalWrite(motor3pin1, LOW);
+  digitalWrite(motor3pin2, LOW);
+  digitalWrite(motor4pin1, LOW);
+  digitalWrite(motor4pin2, LOW);
+  Serial.println("idle");
+  }
+  
+  // If the throttle is greater than zero, then the robot goes forward
+  else if (throttle >= 10) {
+    // turn left forward
+    if (abs(steering) <= 10) {
+  digitalWrite(motor1pin1, HIGH);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, HIGH);
+  digitalWrite(motor3pin1,  LOW);
+  digitalWrite(motor3pin2, HIGH);
+  digitalWrite(motor4pin1, LOW);
+  digitalWrite(motor4pin2, HIGH);
+  Serial.println("forward");
+    }
+    // turn right
+    else if (steering >= 35) {
+
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, HIGH);
+  digitalWrite(motor2pin1, HIGH);
+  digitalWrite(motor2pin2, LOW);
+
+  digitalWrite(motor3pin1, LOW);
+  digitalWrite(motor3pin2, HIGH);
+  digitalWrite(motor4pin1, LOW);
+  digitalWrite(motor4pin2, HIGH);
+  Serial.println("RIGHT");
+    }
+  else if (steering <= -35){
+  digitalWrite(motor1pin1, HIGH);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, HIGH);
+
+  digitalWrite(motor3pin1, HIGH);
+  digitalWrite(motor3pin2, LOW);
+  digitalWrite(motor4pin1, HIGH);
+  digitalWrite(motor4pin2, LOW);
+  Serial.println("LEFT");
+  }
+  }
+  // backward
+  else {
+    if (abs(steering) <= 10) {
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, HIGH);
+  digitalWrite(motor2pin1, HIGH);
+  digitalWrite(motor2pin2, LOW);
+  digitalWrite(motor3pin1,  HIGH);
+  digitalWrite(motor3pin2, LOW);
+  digitalWrite(motor4pin1, HIGH);
+  digitalWrite(motor4pin2, LOW);
+  Serial.println("backwards");
+    }
+
+  else if (steering >= 35) {
+
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, HIGH);
+  digitalWrite(motor2pin1, HIGH);
+  digitalWrite(motor2pin2, LOW);
+
+  digitalWrite(motor3pin1, LOW);
+  digitalWrite(motor3pin2, HIGH);
+  digitalWrite(motor4pin1, LOW);
+  digitalWrite(motor4pin2, HIGH);
+  Serial.println("RIGHT");
+    }
+  else if (steering <= -35){
+  digitalWrite(motor1pin1, HIGH);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, HIGH);
+
+  digitalWrite(motor3pin1, HIGH);
+  digitalWrite(motor3pin2, LOW);
+  digitalWrite(motor4pin1, HIGH);
+  digitalWrite(motor4pin2, LOW);
+  Serial.println("LEFT");
+  
+  }
+  }
+  if (crab == -1){
+  delay(50);
+  digitalWrite(motor1pin1, LOW);
+  digitalWrite(motor1pin2, LOW);
+  digitalWrite(motor2pin1, LOW);
+  digitalWrite(motor2pin2, LOW);
+
+  digitalWrite(motor3pin1, LOW);
+  digitalWrite(motor3pin2, LOW);
+  digitalWrite(motor4pin1, LOW);
+  digitalWrite(motor4pin2, LOW);
+  delay(200);}
+    
+}
+
+void setup() {
+    // put your setup code here, to run once:
+  pinMode(motor1pin1, OUTPUT);
+  pinMode(motor1pin2, OUTPUT);
+  pinMode(motor2pin1,  OUTPUT);
+  pinMode(motor2pin2, OUTPUT);
+  pinMode(motor3pin1, OUTPUT);
+  pinMode(motor3pin2, OUTPUT);
+  pinMode(motor4pin1,  OUTPUT);
+  pinMode(motor4pin2, OUTPUT);
+
+  // Begin serial communication at 9600 bps
+  Serial.begin(115200);
+  // Begin serial communication with HM 10 at 9600 bps 
+  bluetooth.begin(9600);
+  // delay in case the HM 10 needs time to respond
+  delay(100);
+  Serial.println("Setup Complete");
+}
+
+
+void loop() {
+if (button != -1) {
+  if (button ==21){
+    crab = crab * -1;
+  }
+}
+  int throttle = phone.getThrottle() - 50;
+  int steering = phone.getSteering() - 50;
+  Serial.print("Throttle: "); 
+  Serial.print(throttle); Serial.print("\tSteering: "); Serial.println(steering);
+  handleDriving(throttle,steering,crab);
+  button = phone.getButton();
+    if (button != -1) {
+        myservo.attach(6);
+        myservo_b.attach(5);
+
+        digitalWrite(motor1pin1, LOW);
+        digitalWrite(motor1pin2, LOW);
+        digitalWrite(motor2pin1, LOW);
+        digitalWrite(motor2pin2, LOW);
+
+        digitalWrite(motor3pin1, LOW);
+        digitalWrite(motor3pin2, LOW);
+        digitalWrite(motor4pin1, LOW);
+        digitalWrite(motor4pin2, LOW);
+        Serial.print("Button: ");
+        Serial.println(button);
+        if (button == 2){
+    for (pos = 30; pos <= 165; pos += 10) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10); }
+      for (pos = 165; pos <= 30; pos -= 10) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10);                        // waits 15ms for the servo to reach the position
+  }
+      for (pos = 30; pos <= 165; pos += 10) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10); }
+  for (pos = 165; pos >= 50; pos -= 3) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  delay(1500); 
+  button = phone.getButton();
+  if (button == 6){
+  for (pos = 50; pos >= 0; pos -= 6) { // goes from 180 degrees to 0 degrees
+    myservo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(10);   }                    // waits 15ms for the servo to reach the position
+  }      
+        }
+  if (button == 3){
+for (pos = 140; pos >= 20; pos -= 10) { // goes from 180 degrees to 0 degrees
+    myservo_b.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(30);                       // waits 15ms for the servo to reach the position
+  }
+  for (pos = 0; pos <= 120 ; pos += 5) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo_b.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  delay(1500);
+  button = phone.getButton(); 
+  if (button == 6){
+  for (pos = 120; pos <= 160; pos += 5) { // goes from 180 degrees to 0 degrees
+    myservo_b.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(30);                       // waits 15ms for the servo to reach the position
+  }}}
+        myservo.detach();
+        myservo_b.detach();
+    }
+
+  delay(100);
+}
